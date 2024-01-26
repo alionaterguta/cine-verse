@@ -4,13 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch&family=Inter&family=Libre+Barcode+39+Extended+Text&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1> Project Documentation</h1>
-    <p> Build the server-side component of a “movies” web application. The web
-        application will provide users with access to information about different
-        movies, directors, and genres. Users will be able to sign up, update their
-        personal information, and create a list of their favorite movies</p>
+    <header>
+        <h1> CINE-VERSE EXPRESS API </h1>
+        <h5> Short description </h5>
+        <p> The web application provides users with access to information about different <br>
+            movies, directors, and genres. Users will be able to sign up, update their <br>
+            personal information, and create a list of their favorite movies</p>
+    </header>
+    <main>
+        <h3> Server</h3>
+        <button> localhost:8080 </button>
+        <h4> MOVIES: Managing movies API </h4>
+        <div class="endpoints-list">
+            <div class="get"> GET</div> <span>/movies</span> lists all the movies
+        </div>
+        <div class="endpoints-list">
+            <div class="get"> GET</div> <span>/movies/{title}</span> lists all data about a movie by the title
+        </div>
+        <div class="endpoints-list">
+            <div class="get"> GET</div> <span>/movies/genre/{genre}</span> lists all the movie titles with a specific genre
+        </div>
+        <div class="endpoints-list">
+            <div class="get"> GET</div> <span>/movies/director/{directorName}</span> lists data about a director
+        </div>
+        <div class="endpoints-list">
+            <div class="get"> GET</div> <span>/users</span> lists all the users
+        </div>
+        <div class="endpoints-list">
+            <div class="post">POST</div> <span>/users</span> create a new user
+        </div>
+        <div class="endpoints-list">
+            <div class="put">PUT</div> <span>/users/{id}</span> update user name using the id
+        </div>
+        <div class="endpoints-list">
+            <div class="delete">DELETE</div> <span>/users/{id}</span> remove user from the list
+        </div>
+        <div class="endpoints-list">
+            <div class="post">POST</div> <span>/users/{id}/{movieTitle}</span> add a movie to the user's favorite movies
+            list
+        </div>
+        <div class="endpoints-list">
+            <div class="delete">DELETE</div> <span>/users/{id}/{movieTitle}</span> delete a movie from the user's favorite
+            movies list
+        </div>
+    </main>
 </body>
 </html>
 
