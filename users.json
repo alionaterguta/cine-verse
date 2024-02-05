@@ -1,0 +1,4 @@
+{"_id":{"$oid":"65bbcb0eb8b6afb7fe6dd9cb"},"user_firstname":"Alice","user_lastname":"Wonderland","email":"alice@email.com","password":"securepassword1","birthdate":{"$date":"1990-05-15T00:00:00Z"},"user_movies":[]}
+{"_id":{"$oid":"65bbcb70b8b6afb7fe6dd9cc"},"user_firstname":"Bob","user_lastname":"Adventure","email":"bob@email.com","password":"strongpass123","birthdate":{"$date":"1985-09-22T00:00:00Z"},"user_movies":[]}
+{"_id":{"$oid":"65bbcd06b8b6afb7fe6dd9cd"},"user_firstname":"Charlie","user_lastname":"Coder","email":"charlie@email.com","password":"codingrocks456","birthdate":{"$date":"1993-03-10T00:00:00Z"},"user_movies":["Inception"]}
+{"_id":{"$oid":"65bbcd6cb8b6afb7fe6dd9ce"},"user_firstname":"David","user_lastname":"Explorer","email":"david@email.com","password":"exploration789","birthdate":{"$date":"1994-08-18T00:00:00Z"},"user_movies":[]}

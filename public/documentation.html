@@ -25,13 +25,13 @@
             <div class="get"> GET</div> <span>/movies</span> lists all the movies
         </div>
         <div class="endpoints-list">
-            <div class="get"> GET</div> <span>/movies/{title}</span> lists all data about a movie by the title
+            <div class="get"> GET</div> <span>/movies/{Title}</span> lists all data about a movie by the title
         </div>
         <div class="endpoints-list">
-            <div class="get"> GET</div> <span>/movies/genre/{genre}</span> lists all the movie titles with a specific genre
+            <div class="get"> GET</div> <span>/movies/genre/{Genre}</span> lists all the movie titles with a specific genre
         </div>
         <div class="endpoints-list">
-            <div class="get"> GET</div> <span>/movies/director/{directorName}</span> lists data about a director
+            <div class="get"> GET</div> <span>/movies/director/{Director Name}</span> lists data about a director
         </div>
         <div class="endpoints-list">
             <div class="get"> GET</div> <span>/users</span> lists all the users
@@ -40,17 +40,17 @@
             <div class="post">POST</div> <span>/users</span> create a new user
         </div>
         <div class="endpoints-list">
-            <div class="put">PUT</div> <span>/users/{id}</span> update user name using the id
+            <div class="put">PUT</div> <span>/users/{UserName}</span> update user name using the UserName
         </div>
         <div class="endpoints-list">
-            <div class="delete">DELETE</div> <span>/users/{id}</span> remove user from the list
+            <div class="delete">DELETE</div> <span>/users/{UserName}</span> remove user from the list
         </div>
         <div class="endpoints-list">
-            <div class="post">POST</div> <span>/users/{id}/{movieTitle}</span> add a movie to the user's favorite movies
+            <div class="post">POST</div> <span>/users/{UserName}/movies/{id}</span> add a movie to the user's favorite movies
             list
         </div>
         <div class="endpoints-list">
-            <div class="delete">DELETE</div> <span>/users/{id}/{movieTitle}</span> delete a movie from the user's favorite
+            <div class="delete">DELETE</div> <span>/users/{UserName}/movies/{id}</span> delete a movie from the user's favorite
             movies list
         </div>
     </main>
