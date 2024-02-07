@@ -183,7 +183,7 @@ app.get('/movies/genre/:genre', passport.authenticate('jwt', { session: false })
  async (req, res) =>{
     await Movies.find({ Genre: req.params.genre })
     .then((movie)=>{
-        if (!movie) {
+        if (!movie.length) {            
             res.status(400).send(req.params.genre + ' movies were not found.'); 
         } else {
             res.json(movie);
