@@ -14,6 +14,11 @@ const Directors = Models.Director;
 
 mongoose.connect('mongodb://localhost:27017/movieDB', { useNewUrlParser: true, useUnifiedTopology: true });
 
+const cors =require('cors');
+app.use(cors());
+const { check, validationResult} =require('express-validator');
+
+
 // Logging midleware
 app.use(morgan('common'));
 app.use(bodyParser.json());
@@ -48,31 +53,42 @@ app.get('/users', passport.authenticate('jwt', { session: false }),
 });
 
 // CREATE
-app.post('/users', async (req, res) => {
-    await Users.findOne({ UserName: req.body.UserName })
-      .then((user) => {
-        if (user) {
-          return res.status(400).send(req.body.UserName + " already exists");
-        } else {
-          Users.create({
-            UserName: req.body.UserName,
-            Password: req.body.Password,
-            Email: req.body.Email,
-            Birthdate: req.body.Birthday,
-          })
-            .then((user) => {
-              res.status(201).json(user);
-            })
-            .catch((error) => {
-              console.error(error);
-              res.status(500).send("Error: " + error);
-            });
+app.post('/users', 
+   [ check('Username', 'Username is required').isLength({min:5}),
+    check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('Email', 'Email does not appear to be valid').isEmail()], async (req, res) => {
+        let errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
         }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send("Error " + error);
-      });
+        let hashedPassword = Users.hashPassword(req.body.Password);
+        await Users.findOne({ UserName: req.body.UserName })
+          .then((user) => {
+            if (user) {
+              return res
+                .status(400)
+                .send(req.body.UserName + " already exists");
+            } else {
+              Users.create({
+                UserName: req.body.UserName,
+                Password: hashedPassword,
+                Email: req.body.Email,
+                Birthdate: req.body.Birthday,
+              })
+                .then((user) => {
+                  res.status(201).json(user);
+                })
+                .catch((error) => {
+                  console.error(error);
+                  res.status(500).send("Error: " + error);
+                });
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            res.status(500).send("Error " + error);
+          });
 
 });
 
@@ -222,11 +238,11 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something went wrong!');
 });
 
-app.listen(8080, () => {
-    console.log('My first Node test server is running on Port 8080.');
+
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0',() => {
+ console.log('Listening on Port ' + port);
 });
-
-
 
 
 
