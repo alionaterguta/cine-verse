@@ -93,7 +93,11 @@ app.post('/users',
 });
 
 // UPDATE User data by username
-app.put('/users/:username', passport.authenticate('jwt', { session: false }),
+app.put('/users/:username', 
+[ check('UserName', 'UserName is required').isLength({min:5}),
+    check('UserName', 'UserName contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('Email', 'Email does not appear to be valid').isEmail()],
+    passport.authenticate('jwt', { session: false }),
 async (req, res)=>{
     if( req.user.UserName !== req.params.username) {
         return res.status(400).send('Permission denied');
