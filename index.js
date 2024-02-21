@@ -261,8 +261,7 @@ app.get(
 // READ
 app.get(
   "/movies/director/:directorName",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
+   async (req, res) => {
     await Directors.findOne({ Name: req.params.directorName })
       .then((directors) => {
         if (!directors) {
