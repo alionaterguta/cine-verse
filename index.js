@@ -17,6 +17,8 @@ mongoose.connect(process.env.CONNECTION_URI, {
   useUnifiedTopology: true,
 });
 
+// mongoose.connect('mongodb://localhost:27017/movieDB', { useNewUrlParser: true, useUnifiedTopology: true });
+
 const cors = require("cors");
 app.use(cors());
 const { check, validationResult } = require("express-validator");
@@ -221,7 +223,20 @@ app.get(
       });
   }
 );
-
+// READ   --  Director route
+app.get(
+  "/movies/directors",
+  async (req, res) => {
+    await Directors.find()
+      .then((directors) => {
+        res.status(201).json(directors);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
 // READ
 app.get(
   "/movies/:title",
