@@ -144,35 +144,38 @@ app.put(
 
 // CREATE
 app.post(
-  "/users/:username/movies/:movieId",
+  "/users/:username/movies/:title",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    await Users.findOneAndUpdate(
-      { UserName: req.params.username },
-      {
-        $push: { FavoriteMovies: req.params.movieId },
-      },
-      { new: true }
-    )
+    await Movies.findOne({Title: req.params.title})
+    .then( async (movie) => {
+      if (!movie) {
+        return res.status(404).json({error: "Movie not found"});
+      }
+      await Users.findOneAndUpdate(
+        { UserName: req.params.username },
+        { $push: { FavoriteMovies: req.params.title } },
+        { new: true }
+      )
       .then((updatedUser) => {
         res.json(updatedUser);
       })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error: " + err);
-      });
-  }
-);
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("Error: " + error);
+    });
+  });
 
 // DELETE
 app.delete(
-  "/users/:username/movies/:movieId",
+  "/users/:username/movies/:title",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     await Users.findOneAndUpdate(
       { UserName: req.params.username },
       {
-        $pull: { FavoriteMovies: req.params.movieId },
+        $pull: { FavoriteMovies: req.params.title },
       },
       { new: true }
     )
@@ -211,7 +214,7 @@ app.delete(
 
 // READ   --  Movie route
 app.get(
-  "/movies",
+  "/movies", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     await Movies.find()
       .then((movies) => {
@@ -225,7 +228,7 @@ app.get(
 );
 // READ   --  Director route
 app.get(
-  "/movies/directors",
+  "/movies/directors", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     await Directors.find()
       .then((directors) => {
@@ -275,7 +278,7 @@ app.get(
 
 // READ
 app.get(
-  "/movies/director/:directorName",
+  "/movies/director/:directorName", 
    async (req, res) => {
     await Directors.findOne({ Name: req.params.directorName })
       .then((directors) => {

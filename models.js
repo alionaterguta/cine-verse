@@ -5,7 +5,7 @@ let movieSchema= mongoose.Schema({
     Title: {type: String, required: true},
     Description: {type: String, required: true},
     Genre: [String],
-    Director: { type: mongoose.Schema.Types.ObjectId, ref: 'Directors'},
+    Director: { type: String, required: true },
     Featured: Boolean 
 });
 
@@ -14,7 +14,7 @@ let userSchema = mongoose.Schema({
     Password: {type: String, required: true},
     Email: {type: String, required: true},
     Birthdate: Date,
-    FavoriteMovies: [{type:mongoose.Schema.Types.ObjectId, ref:'Movie'}],  
+    FavoriteMovies: [{type: String, required: true}],  
 
 });
 
@@ -28,7 +28,6 @@ userSchema.methods.validatePassword = function(password) {
 let directorSchema = mongoose.Schema({
     Name: {String},
     Bio: {String},
-    //Year 
     Birth: {type: Date},
     Death:{type: Date}
 })
