@@ -2,6 +2,7 @@ const  mongoose  = require("mongoose");
 const bcrypt = require('bcrypt');
 
 let movieSchema= mongoose.Schema({
+    ImgPath: String,
     Title: {type: String, required: true},
     Description: {type: String, required: true},
     Genre: [String],
