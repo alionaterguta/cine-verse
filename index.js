@@ -124,7 +124,7 @@ app.put(
       { UserName: req.params.username },
       {
         $set: {
-          Username: req.body.UserName,
+          UserName: req.body.UserName,
           Password: req.body.Password,
           Email: req.body.Email,
           Birthdate: req.body.Birthdate,
