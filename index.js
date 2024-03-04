@@ -193,15 +193,19 @@ app.delete(
   }
 );
 
+
+
 // DELETE
 app.delete(
-  "/users/:username",
+  "/users/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    if (req.user.UserName !== req.params.username) {
+    if (req.user._id !== req.params.id) {
       return res.status(400).send("Permission denied");
     }
-    await Users.findOneAndUpdate({ UserName: req.params.username })
+    const userId = req.params.id;
+
+    await Users.findByIdAndRemove(userId)
       .then((user) => {
         if (!user) {
           res.status(400).send(req.params.username + " was not found.");
