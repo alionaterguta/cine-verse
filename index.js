@@ -208,9 +208,9 @@ app.delete(
     await Users.findByIdAndRemove(userId)
       .then((user) => {
         if (!user) {
-          res.status(400).send(req.params.username + " was not found.");
+          res.status(400).send(req.params.id + " was not found.");
         } else {
-          res.status(200).send(req.params.username + " was deleted.");
+          res.status(200).send(req.params.id + " was deleted.");
         }
       })
       .catch((err) => {
