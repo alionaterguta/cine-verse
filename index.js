@@ -205,7 +205,7 @@ app.delete(
     // }
     const userId = req.params.id;
 
-    await Users.findByIdAndRemove(userId)
+    await Users.findByIdAndDelete(userId)
       .then((user) => {
         if (!user) {
           res.status(400).send(req.params.id + " was not found.");
