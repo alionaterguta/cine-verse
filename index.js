@@ -9,12 +9,13 @@ const app = express();
 
 const mongoose = require("mongoose");
 const Models = require("./models");
+require("dotenv").config();
 
 const Movies = Models.Movie;
 const Users = Models.User;
 const Directors = Models.Director;
 
-mongoose.connect("mongodb://localhost:27017/movieDB", {
+mongoose.connect(process.env.CONNECTION_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -26,7 +27,7 @@ let allowedOrigins = [
   "http://localhost:8080",
   "http://testsite.com",
   "http://localhost:1234",
-  "https://cine-star.netlify.app",
+  "https://cine-verse-app.netlify.app",
   "http://localhost:4200",
 ];
 
