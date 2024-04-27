@@ -4,12 +4,7 @@ const jwt = require("jsonwebtoken"),
   passport = require("passport");
 
 require("./passport");
-/**
- * Generates a JWT token for the given user.
- * @param {object} user - The user object to generate the token for.
- * @param {string} user.UserName - The username of the user.
- * @returns {string} The generated JWT token.
- */
+
 let generateJWTToken = (user) => {
   return jwt.sign(user, jwtSecret, {
     subject: user.UserName,
@@ -18,6 +13,47 @@ let generateJWTToken = (user) => {
   });
 };
 
+/**
+ * @openapi
+ * /login:
+ *   post:
+ *     summary: Authenticate user
+ *     description: Authenticate user by logging in with provided credentials.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Successful authentication
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 token:
+ *                   type: string
+ *       '400':
+ *         description: Bad request. Something is not right with the provided credentials.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
 module.exports = (router) => {
   router.post("/login", (req, res) => {
     passport.authenticate("local", { session: false }, (error, user, info) => {
