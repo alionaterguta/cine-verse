@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: index.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: index.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { error } = require("console");
+const express = require("express"),
+  uuid = require("uuid"),
+  bodyParser = require("body-parser"),
+  morgan = require("morgan");
+const app = express();
+
+const mongoose = require("mongoose");
+const Models = require("./models");
+
+const Movies = Models.Movie;
+const Users = Models.User;
+const Directors = Models.Director;
+
+mongoose.connect(process.env.CONNECTION_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// mongoose.connect('mongodb://localhost:27017/movieDB', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const cors = require("cors");
+const { check, validationResult } = require("express-validator");
+
+let allowedOrigins = [
+  "http://localhost:8080",
+  "http://testsite.com",
+  "http://localhost:1234",
+  "https://cine-star.netlify.app",
+  "http://localhost:4200",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        // If a specific origin isn’t found on the list of allowed origins
+        let message =
+          "The CORS policy for this application doesn`t allow access from origin " +
+          origin;
+        return callback(new Error(message), false);
+      }
+      return callback(null, true);
+    },
+  })
+);
+
+// Logging midleware
+app.use(morgan("common"));
+app.use(bodyParser.json());
+
+let auth = require("./auth")(app);
+const passport = require("passport");
+require("./passport");
+
+let myLogger = (req, res, next) => {
+  console.log(req.url);
+  next();
+};
+
+app.use(myLogger);
+
+/**
+ * Sets up a GET endpoint for the Welcome route.
+ * This function defines a GET endpoint at the root URL ("/") to send a welcome message.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ */
+app.get("/", (req, res) => {
+  res.send("Welcome to cine-verse API");
+});
+
+/**
+ * Sets up a GET endpoint to retrieve the list of users.
+ * This function defines a GET endpoint at the root URL ("/users") to fetch the list of users.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ */
+app.get(
+  "/users",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Users.find()
+      .then((users) => {
+        res.status(201).json(users);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+/**
+ * Sets up a POST endpoint to sign up.
+ * This function defines a POST endpoint at the root URL ("/users") to create an user account.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.post()` method.
+ * @description The endpoint expects a JSON body with user information including:
+ *               - UserName: The username of the user.
+ *               - Password: The password for the user account.
+ *               - Email: The email address of the user.
+ *               - Birthdate: The birthdate of the user.
+ *               Example JSON body:
+ *               {
+ *                   "UserName": "exampleUser",
+ *                   "Email": "user@example.com"
+ *                   "Password": "examplePassword"
+ *                   "Birthdate": "1983-03-22"
+ *               }
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+
+app.post(
+  "/users",
+  [
+    check("UserName", "UserName is required").isLength({ min: 5 }),
+    check(
+      "UserName",
+      "UserName contains non alphanumeric characters - not allowed."
+    ).isAlphanumeric(),
+    check("Email", "Email does not appear to be valid").isEmail(),
+  ],
+  async (req, res) => {
+    let errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let hashedPassword = Users.hashPassword(req.body.Password);
+    await Users.findOne({ UserName: req.body.UserName })
+      .then((user) => {
+        if (user) {
+          return res.status(400).send(req.body.UserName + " already exists");
+        } else {
+          Users.create({
+            UserName: req.body.UserName,
+            Password: hashedPassword,
+            Email: req.body.Email,
+            Birthdate: req.body.Birthday,
+          })
+            .then((user) => {
+              res.status(201).json(user);
+            })
+            .catch((error) => {
+              console.error(error);
+              res.status(500).send("Error: " + error);
+            });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error " + error);
+      });
+  }
+);
+
+/**
+ * Sets up a PUT endpoint to update user data.
+ * This function defines a PUT endpoint at the root URL ("/users/:username") to update user data by username.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.put()` method.
+ * @description The endpoint expects a JSON body with user information including:
+ *               - UserName: The username of the user.
+ *               - Password: (Optional) The new password for the user account.
+ *               - Email: The email address of the user.
+ *               - Birthdate: The birthdate of the user.
+ *               Example JSON body:
+ *               {
+ *                   "UserName": "exampleUser",
+ *                   "Email": "user@example.com"
+ *                   "Password": "examplePassword"
+ *                   "Birthdate": "1983-03-22"
+ *               }
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.put(
+  "/users/:username",
+  [
+    check("UserName", "UserName is required").isLength({ min: 5 }),
+    check(
+      "UserName",
+      "UserName contains non alphanumeric characters - not allowed."
+    ).isAlphanumeric(),
+    check("Email", "Email does not appear to be valid").isEmail(),
+  ],
+  passport.authenticate("jwt", { session: false }),
+
+  /**
+   * This method updates user data.
+   * It then returns the updated user object.
+   * @param {string} req.params.UserName - The username of the user.
+   * @param {string} req.params.Email - The email address of the user.
+   * @param {string} req.params.Password - (Optional) The new password for the user account
+   * @param {date} req.params.Birthdate - The birthdate of the user.
+   * @returns {Promise} A promise that resolves with the updated user data.
+   */
+  async (req, res) => {
+    if (req.user.UserName !== req.params.username) {
+      return res.status(400).send("Permission denied");
+    }
+
+    const updatedUser = {
+      UserName: req.body.UserName,
+      Email: req.body.Email,
+      Birthdate: req.body.Birthdate,
+    };
+
+    if (req.body.Password) {
+      updatedUser.Password = Users.hashPassword(req.body.Password);
+    }
+
+    await Users.findOneAndUpdate(
+      { UserName: req.params.username },
+      { $set: updatedUser },
+      { new: true }
+    )
+      .then((updatedUser) => {
+        res.json(updatedUser);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+/**
+ * Sets up a POST endpoint to add movies to FavoriteMovies[].
+ * This function defines a POST endpoint at the root URL ("/users/:username/movies/:title") to push a movie title to the FavoriteMovies[].
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.post()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+const name = () => {
+  return false;
+};
+
+/**
+ * Sets up a POST endpoint to add movies to FavoriteMovies[].
+ * This function defines a POST endpoint at the root URL ("/users/:username/movies/:title") to push a movie title to the FavoriteMovies[].
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.post()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.post(
+  "/users/:username/movies/:title",
+  passport.authenticate("jwt", { session: false }),
+  /**
+   * Update the user's favorite movies list.
+   * This method finds the user by their username in the database and adds the specified movie to their list of favorite movies.
+   * It then returns the updated user object.
+   * @param {string} req.params.username - The username of the user whose favorite movies list is being updated.
+   * @param {string} req.params.title - The title of the movie to add to the user's favorite movies list.
+   * @returns {Promise} A promise that resolves with the updated user object.
+   */
+  async (req, res) => {
+    await Movies.findOne({ Title: req.params.title })
+      .then(async (movie) => {
+        if (!movie) {
+          return res.status(404).json({ error: "Movie not found" });
+        }
+
+        await Users.findOneAndUpdate(
+          { UserName: req.params.username },
+          { $push: { FavoriteMovies: req.params.title } },
+          { new: true }
+        ).then((updatedUser) => {
+          res.json(updatedUser);
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).send("Error: " + error);
+      });
+  }
+);
+
+/**
+ * Sets up a DELETE endpoint to remove movies from FavoriteMovies[].
+ * This function defines a DELETE endpoint at the root URL ("/users/:username/movies/:title") to delete a movie title from the FavoriteMovies[].
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.post()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.delete(
+  "/users/:username/movies/:title",
+  passport.authenticate("jwt", { session: false }),
+  /**
+   * Update the user's favorite movies list.
+   * This method finds the user by their username in the database and removes the specified movie from their list of favorite movies.
+   * It then returns the updated user object.
+   * @param {string} req.params.username - The username of the user whose favorite movies list is being updated.
+   * @param {string} req.params.title - The title of the movie to pull from the user's favorite movies list.
+   * @returns {Promise} A promise that resolves with the updated user object.
+   */
+  async (req, res) => {
+    await Users.findOneAndUpdate(
+      { UserName: req.params.username },
+      {
+        $pull: { FavoriteMovies: req.params.title },
+      },
+      { new: true }
+    )
+      .then((updatedUser) => {
+        res.json(updatedUser);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+/**
+ * Sets up a DELETE endpoint to remove a user account by ID.
+ * This function defines a DELETE endpoint at the root URL ("/users/:id") to delete a user account using the ID of the username.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.post()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.delete(
+  "/users/:id",
+  passport.authenticate("jwt", { session: false }),
+  /**
+   * Delete an user account.
+   * This method finds the user by their id in the database and removes the user data object from database.
+   * It then returns the updated user object.
+   * @param {string} req.params.id - The user data are deleted.
+   */
+  async (req, res) => {
+    const userId = req.params.id;
+
+    await Users.findByIdAndDelete(userId)
+      .then((user) => {
+        if (!user) {
+          res.status(400).send(req.params.id + " was not found.");
+        } else {
+          res.status(200).send(req.params.id + " was deleted.");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+/**
+ * Sets up a GET endpoint to retrieve the list of movies.
+ * This function defines a GET endpoint at the root URL ("/movies") to fetch the movies collection.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.get(
+  "/movies",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Movies.find()
+      .then((movies) => {
+        res.status(201).json(movies);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+/**
+ * Sets up a GET endpoint to retrieve the list of directors.
+ * This function defines a GET endpoint at the root URL ("/movies/directors") to fetch the directors collection.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.get(
+  "/movies/directors",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Directors.find()
+      .then((directors) => {
+        res.status(201).json(directors);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+/**
+ * Sets up a GET endpoint to retrieve a movie by title.
+ * This function defines a GET endpoint at the root URL ("/movies/:title") to fetch a movie by title.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.get(
+  "/movies/:title",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Movies.findOne({ Title: req.params.title })
+      .then((movie) => {
+        res.json(movie);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+/**
+ * Sets up a GET endpoint to retrieve movies by genre.
+ * This function defines a GET endpoint at the root URL ("/movies/genre/:genre") to fetch movies by genre.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.get(
+  "/movies/genre/:genre",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    await Movies.find({ Genre: req.params.genre })
+      .then((movie) => {
+        if (!movie.length) {
+          res.status(400).send(req.params.genre + " movies were not found.");
+        } else {
+          res.json(movie);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error: " + err);
+      });
+  }
+);
+
+/**
+ * Sets up a GET endpoint to retrieve a director's name.
+ * This function defines a GET endpoint at the root URL ("/movies/director/:directorName") to fetch the director's name by name.
+ * @param {Object} app - The Express application object.
+ *                       This parameter is required to define routes using the app's `.get()` method.
+ * @authentication This endpoint requires a valid JSON Web Token (JWT) in the Authorization header.
+ *                  Example: Authorization: Bearer &lt;token>
+ */
+app.get("/movies/director/:directorName", async (req, res) => {
+  await Directors.findOne({ Name: req.params.directorName })
+    .then((directors) => {
+      if (!directors) {
+        res.status(400).send(req.params.directorName + " was not found.");
+      } else {
+        res.json(directors);
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error: " + err);
+    });
+});
+
+/**
+ * Sets up a middleware to serve documentation files.
+ * This middleware maps the "/documentation" URL path to serve static files from the "public" directory,
+ * specifically directing requests to "documentation.html".
+ * @param {string} "/documentation" - The URL path where the documentation will be served.
+ * @param {Function} express.static - The Express middleware function used to serve static files.
+ * @param {string} "public" - The directory from which to serve static files.
+ */
+app.use(
+  "/documentation",
+  express.static("public", { index: "documentation.html" })
+);
+
+/**
+ * Sets up a middleware to handle errors.
+ * This middleware function catches errors that occur during request process.
+ * It logs the error to the console and sends a 500 Internal Server Error response to the client.
+ * @param {Error} err - The error object passed to the middleware.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} next - The next middleware function in the Express middleware chain.
+ */
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something went wrong!");
+});
+
+/**
+ * Starts the Express server to listen for incoming requests.
+ * The server listens on the specified port or defaults to port 8080.
+ * It logs a message to the console indicating the server is listening.
+ * @param {number} process.env.PORT - The port number specified in the environment variables.
+ * @param {number} 8080 - The default port number if no port is specified in the environment variables.
+ */
+const port = process.env.PORT || 8080;
+app.listen(port, "0.0.0.0", () => {
+  console.log("Listening on Port " + port);
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#name">name</a></li><li><a href="global.html#port">port</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Fri Apr 26 2024 16:33:38 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

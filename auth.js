@@ -1,35 +1,39 @@
-const jwtSecret ='your_jwt_secret';
+const jwtSecret = "your_jwt_secret";
 
-const jwt = require('jsonwebtoken'),
-passport = require('passport');
+const jwt = require("jsonwebtoken"),
+  passport = require("passport");
 
-require('./passport');
-
+require("./passport");
+/**
+ * Generates a JWT token for the given user.
+ * @param {object} user - The user object to generate the token for.
+ * @param {string} user.UserName - The username of the user.
+ * @returns {string} The generated JWT token.
+ */
 let generateJWTToken = (user) => {
-    return jwt.sign(user, jwtSecret, {
-        subject: user.UserName,
-        expiresIn: '7d',
-        algorithm: 'HS256'
-    });
-}
+  return jwt.sign(user, jwtSecret, {
+    subject: user.UserName,
+    expiresIn: "7d",
+    algorithm: "HS256",
+  });
+};
 
-//POST login.
 module.exports = (router) => {
-    router.post('/login', (req, res) => {
-        passport.authenticate('local', { session: false}, (error, user, info) => {
-            if (error || !user){
-                return res.status(400).json({
-                    message: 'Something is not right',
-                    user: user
-                });
-            }
-            req.login(user, { session: false }, (error) =>{
-                if (error) {
-                    res.send(error);
-                }
-            let token = generateJWTToken(user.toJSON());
-            return res.json({user, token});
-            });
-        })(req, res);
-    });
-}
+  router.post("/login", (req, res) => {
+    passport.authenticate("local", { session: false }, (error, user, info) => {
+      if (error || !user) {
+        return res.status(400).json({
+          message: "Something is not right",
+          user: user,
+        });
+      }
+      req.login(user, { session: false }, (error) => {
+        if (error) {
+          res.send(error);
+        }
+        let token = generateJWTToken(user.toJSON());
+        return res.json({ user, token });
+      });
+    })(req, res);
+  });
+};
