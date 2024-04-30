@@ -29,6 +29,7 @@ let allowedOrigins = [
   "http://localhost:1234",
   "https://cine-verse-app.netlify.app",
   "http://localhost:4200",
+  "https://alionaterguta.github.io/CineVerse-Angular-app",
 ];
 
 app.use(
