@@ -23,7 +23,7 @@ Before you begin, make sure you have the following installed on your local machi
 
 1. Navigate to the project directory:
 
-   cd <project-directory>
+   cd [project-directory]
 
 1. Install dependencies using npm. For the list of dependencies, refer to the `package.json` file.
 
@@ -72,7 +72,7 @@ All available endpoints along with their descriptions can be viewed https://cine
 
 All endpoints are protected except for `/`. To access them, users must first create an account.
 
-### Testing
+## Testing
 
 You can test the API endpoints using tools like for example Postman.
 
